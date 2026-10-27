@@ -57,26 +57,33 @@
 
 ## Технологический стек
 
-- **Фреймворк:** PlatformIO + Arduino framework
-- **Дисплей:** U8g2 (или аналог для I2C OLED 128×128)
-- **Датчики:** Adafruit AHTX0, Adafruit BMP280 (или аналоги)
-- **Время:** NTP-клиент
-- **Настройки:** энергонезависимое хранилище (NVS/Preferences или LittleFS)
-- **Админка:** HTTP-сервер на устройстве (ESPAsyncWebServer или стандартный WebServer)
+- **Фреймворк:** Arduino, ядро `esp32:esp32` 3.3.12 (установлено)
+- **Тулчейн:** `arduino-cli` (`~/.local/bin/arduino-cli`) и Arduino IDE.
+  Целевая плата: `esp32:esp32:esp32c3` (ESP32C3 Dev Module)
+- **Дисплей:** U8g2 (I2C OLED 128×128) — установлена
+- **Датчики:** Adafruit AHTX0, Adafruit BMP280 — установлены
+- **Время:** NTPClient — установлен
+- **JSON:** ArduinoJson — установлена
+- **Настройки:** Preferences (NVS) или LittleFS
+- **Админка:** встроенный HTTP-сервер (WebServer)
 
-Библиотеки добавляются через `platformio.ini`, а не копированием в `lib/`.
+Установленные библиотеки в `~/Arduino/libraries`: U8g2, U8g2_for_Adafruit_GFX,
+Adafruit AHTX0 / BMP280 / BusIO / GFX / SSD1306 / SH110X / Unified Sensor,
+ArduinoJson, NTPClient, GyverOLED, AutoOTA.
+
+Новые библиотеки ставятся через `arduino-cli lib install <name>` или
+Library Manager в Arduino IDE — не копированием в репозиторий.
 
 ## Структура репозитория
 
 ```
-src/            исходники прошивки (PlatformIO)
-include/        заголовочные файлы
-lib/            локальные библиотеки (только при необходимости)
-platformio.ini  конфигурация сборки
+firmware/       Arduino-скетч (firmware.ino + модули .cpp/.h)
 openspec/       спецификации и change-предложения OpenSpec
 openspec/specs/    текущие спецификации
 openspec/changes/  активные предложения об изменениях
 ```
+
+Имя каталога скетча должно совпадать с именем `.ino` (требование Arduino).
 
 ## Рабочий процесс
 
@@ -86,6 +93,18 @@ openspec/changes/  активные предложения об изменени
 управления требованиями и изменениями. Новая функциональность сначала
 оформляется как change-предложение (`openspec/changes/`), затем реализуется
 и архивируется в `openspec/specs/`.
+
+### Сборка и проверка
+
+```sh
+arduino-cli compile -b esp32:esp32:esp32c3 firmware          # сборка
+arduino-cli upload  -b esp32:esp32:esp32c3 -p <port> firmware # прошивка
+arduino-cli monitor -p <port> -c baudrate=115200              # монитор порта
+```
+
+Перед коммитом изменений в `firmware/` прогонять `compile` — это основная
+проверка. Скетч также открывается в Arduino IDE (File → Open →
+`firmware/firmware.ino`).
 
 ### Соглашения
 

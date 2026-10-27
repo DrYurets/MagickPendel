@@ -6,7 +6,8 @@ schema: spec-driven
 # Keep general project documentation and discoverable codebase facts out.
 context: |
   Проект «Pendel» — прошивка для физического устройства на ESP32-C3
-  (PlatformIO + Arduino framework). Аппаратура: OLED 128x128 по I2C,
+  (Arduino framework, arduino-cli, плата esp32:esp32:esp32c3).
+  Аппаратура: OLED 128x128 по I2C,
   одна кнопка, светодиод, активный баззер, датчик AHT20+BMP280 по I2C.
   Питание от сети, постоянное подключение к Wi-Fi.
   Все артефакты (proposal, design, specs, tasks) пишутся на русском языке.
