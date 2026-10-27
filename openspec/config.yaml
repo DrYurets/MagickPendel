@@ -15,6 +15,9 @@ context: |
   логика в главном цикле (millis() вместо delay()), настройки хранятся
   в энергонезависимой памяти и редактируются через веб-админку.
   Канал команд от родителя ещё не выбран: пульт на ESP32-C3 или Telegram-бот.
+  Вся разработка ведётся через OpenSpec; агент выполняет полный цикл
+  change (proposal→specs→design→tasks→apply→archive) автономно,
+  без ожидания подтверждений между шагами.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
