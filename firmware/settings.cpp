@@ -48,7 +48,8 @@ void sanitize() {
 void settingsLoad() {
   defaults();
   if (!prefs.begin(NS, /*readOnly=*/true)) {
-    Serial.println(F("[settings] NVS недоступен, применены дефолты"));
+    // Namespace ещё не создан (первый запуск) — это не ошибка NVS.
+    Serial.println(F("[settings] настроек нет, применены дефолты"));
     return;
   }
   cfg.callDurationSec = prefs.getUInt("callDur", cfg.callDurationSec);

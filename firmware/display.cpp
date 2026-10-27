@@ -2,17 +2,22 @@
 
 #include <U8g2lib.h>
 
+#include "bus.h"
 #include "climate.h"
 #include "net.h"
 #include "settings.h"
 
 namespace {
+constexpr uint8_t OLED_ADDR = 0x3C;
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 constexpr uint32_t REFRESH_MS = 1000;
+constexpr uint32_t PROBE_MS = 10000;
 uint32_t lastDraw = 0;
+uint32_t lastProbe = 0;
 bool asleep = false;
 bool dirty = true;
+bool present = false;
 
 void center(const char* s, int y) {
   int w = u8g2.getUTF8Width(s);
@@ -36,6 +41,11 @@ size_t utf8Prefix(char* dst, const char* src, int maxChars) {
 }  // namespace
 
 void dispBegin() {
+  present = busPresent(OLED_ADDR) || busProbe(OLED_ADDR);
+  if (!present) {
+    Serial.println(F("[display] OLED не найден, вывод отключён"));
+    return;
+  }
   u8g2.begin();
   u8g2.setBusClock(400000);
   u8g2.enableUTF8Print();
@@ -43,11 +53,12 @@ void dispBegin() {
 
 void dispPowerSave(bool on) {
   asleep = on;
-  u8g2.setPowerSave(on ? 1 : 0);
+  if (present) u8g2.setPowerSave(on ? 1 : 0);
   dirty = true;
 }
 
 void dispShowIdle() {
+  if (!present) return;
   char clockStr[8] = "--:--";
   char countStr[24] = "до отбоя --:--";
   struct tm t;
@@ -74,6 +85,7 @@ void dispShowIdle() {
 }
 
 void dispShowAlert(const char* targetLabel, const char* message) {
+  if (!present) return;
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_10x20_t_cyrillic);
   center(targetLabel, 26);
@@ -92,6 +104,7 @@ void dispShowAlert(const char* targetLabel, const char* message) {
 }
 
 void dispShowSetup() {
+  if (!present) return;
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_9x15_t_cyrillic);
   center("Настройка Wi-Fi", 18);
@@ -105,6 +118,16 @@ void dispShowSetup() {
 void dispTick() {
   if (asleep) return;
   uint32_t now = millis();
+  if (!present) {
+    // Периферия могла появиться позже — редкая проверка шины.
+    if (now - lastProbe < PROBE_MS) return;
+    lastProbe = now;
+    if (busProbe(OLED_ADDR)) {
+      present = true;
+      dispBegin();
+    }
+    return;
+  }
   if (!dirty && now - lastDraw < REFRESH_MS) return;
   lastDraw = now;
   dirty = false;

@@ -2,9 +2,11 @@
 // Архитектура и распиновка: openspec/changes/init-firmware/design.md
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include <Wire.h>
 
 #include "admin.h"
+#include "bus.h"
 #include "button.h"
 #include "climate.h"
 #include "display.h"
@@ -18,25 +20,16 @@ namespace {
 char serialBuf[96];
 uint8_t serialLen = 0;
 
-void i2cScan() {
-  Serial.println(F("[i2c] сканирование шины:"));
-  bool found = false;
-  for (uint8_t addr = 1; addr < 127; addr++) {
-    Wire.beginTransmission(addr);
-    if (Wire.endTransmission() == 0) {
-      Serial.printf("  найдено устройство 0x%02X\n", addr);
-      found = true;
-    }
-  }
-  if (!found) Serial.println(F("  устройств не найдено"));
-}
-
 void printStatus() {
-  Serial.printf("[status] mode=%d wifi=%s time=%s climate=%s\n",
+  Serial.printf("[status] mode=%d wifi=%s ap=%s stations=%d wifimode=%d "
+                "time=%s climate=%s heap=%u\n",
                 (int)modesCurrent(),
                 netConnected() ? "OK" : "нет",
+                netProvisioning() ? "ON" : "off",
+                (int)WiFi.softAPgetStationNum(), (int)WiFi.getMode(),
                 netTimeValid() ? "OK" : "нет",
-                climateValid() ? "OK" : "нет");
+                climateValid() ? "OK" : "нет",
+                ESP.getFreeHeap());
 }
 
 // call 1|2|both [текст] | status | scan
@@ -57,7 +50,7 @@ void handleCommand(char* line) {
     return;
   }
   if (strcmp(line, "status") == 0) return printStatus();
-  if (strcmp(line, "scan") == 0) return i2cScan();
+  if (strcmp(line, "scan") == 0) return busScan();
   Serial.println(F("команды: call 1|2|both [текст], status, scan"));
 }
 
@@ -87,14 +80,15 @@ void setup() {
   settingsLoad();
   settingsPrint();
 
-  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
-  i2cScan();
-
+  // Сеть и админка первыми — точка доступа не должна ждать периферию.
   sigBegin();
-  climateBegin();
-  dispBegin();
   netBegin();
   adminBegin();
+
+  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+  busScan();
+  climateBegin();
+  dispBegin();
   modesBegin();
 
   Serial.println(F("готово. команды: call 1|2|both [текст], status, scan"));

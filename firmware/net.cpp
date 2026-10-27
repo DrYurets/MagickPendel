@@ -23,6 +23,8 @@ void staConnect() {
   staBegun = true;
   lastReconnectTry = millis();
   staAttempts++;
+  // В режиме AP держим комбинированный режим, иначе чистый STA.
+  WiFi.mode(apOn ? WIFI_AP_STA : WIFI_STA);
   WiFi.begin(cfg.ssid, cfg.pass);
   Serial.printf("[net] подключение к %s (попытка %d)\n", cfg.ssid,
                 staAttempts);
@@ -30,8 +32,12 @@ void staConnect() {
 
 void startAp() {
   if (apOn) return;
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(AP_SSID);
+  // Без креденшелов — чистая точка доступа, без STA-сканирования.
+  WiFi.mode(staBegun ? WIFI_AP_STA : WIFI_AP);
+  if (!WiFi.softAP(AP_SSID)) {
+    Serial.println(F("[net] softAP не удался, повтор через 5 с"));
+    return;
+  }
   apOn = true;
   Serial.printf("[net] точка доступа %s, админка: http://%s/\n", AP_SSID,
                 WiFi.softAPIP().toString().c_str());
@@ -47,12 +53,14 @@ void stopAp() {
 }  // namespace
 
 void netBegin() {
+  // Питание от сети — modem sleep не нужен, а в AP-режиме без STA он
+  // делает радио нестабильным (маячки пропадают, клиенты не подключаются).
+  WiFi.setSleep(false);
   if (cfg.ssid[0] == '\0') {
     Serial.println(F("[net] Wi-Fi не настроен → режим настройки"));
     startAp();
     return;
   }
-  WiFi.mode(WIFI_STA);
   staConnect();
   configTzTime(cfg.tz, "pool.ntp.org", "time.nist.gov");
 }
@@ -69,7 +77,14 @@ void netTick() {
   }
   wasConnected = connected;
 
-  if (cfg.ssid[0] == '\0') return;  // нет креденшелов — только AP
+  if (cfg.ssid[0] == '\0') {
+    // Креденшелов нет — держим AP, ретраим при неудаче softAP.
+    if (!apOn && now - lastReconnectTry >= 5000) {
+      lastReconnectTry = now;
+      startAp();
+    }
+    return;
+  }
 
   if (!connected && now - lastReconnectTry >= RECONNECT_INTERVAL_MS) {
     Serial.println(F("[net] переподключение Wi-Fi"));
