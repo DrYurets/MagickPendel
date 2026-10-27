@@ -1,0 +1,20 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# IDE
+.vscode/
+.idea/
+
+# Секреты — не коммитить
+secrets.h
+*.secret.h
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
