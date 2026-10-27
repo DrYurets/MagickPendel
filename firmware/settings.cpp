@@ -2,17 +2,6 @@
 
 #include <Preferences.h>
 
-#if __has_include("secrets.h")
-#include "secrets.h"
-#endif
-
-#ifndef WIFI_SSID
-#define WIFI_SSID ""
-#endif
-#ifndef WIFI_PASS
-#define WIFI_PASS ""
-#endif
-
 Config cfg;
 
 namespace {
@@ -26,10 +15,8 @@ void defaults() {
   cfg.sleepEndMin = 7 * 60;        // 07:00
   strncpy(cfg.tz, "EET-2EEST,M3.5.0/3,M10.5.0/4", sizeof(cfg.tz) - 1);
   cfg.tz[sizeof(cfg.tz) - 1] = '\0';
-  strncpy(cfg.ssid, WIFI_SSID, sizeof(cfg.ssid) - 1);
-  cfg.ssid[sizeof(cfg.ssid) - 1] = '\0';
-  strncpy(cfg.pass, WIFI_PASS, sizeof(cfg.pass) - 1);
-  cfg.pass[sizeof(cfg.pass) - 1] = '\0';
+  cfg.ssid[0] = '\0';  // SSID и пароль задаются через веб-админку
+  cfg.pass[0] = '\0';
 }
 
 // Дефолт, если значение вне допустимого диапазона (пустое/повреждённое).
