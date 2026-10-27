@@ -12,6 +12,9 @@ struct Config {
   char tz[64];               // POSIX TZ-строка
   char ssid[33];             // Wi-Fi
   char pass[65];
+  char child1[24];           // имя первого ребёнка (UTF-8)
+  char child2[24];           // имя второго ребёнка
+  char tgToken[80];          // токен Telegram-бота (пусто = не настроен)
 };
 
 extern Config cfg;

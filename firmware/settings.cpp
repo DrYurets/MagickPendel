@@ -17,6 +17,11 @@ void defaults() {
   cfg.tz[sizeof(cfg.tz) - 1] = '\0';
   cfg.ssid[0] = '\0';  // SSID и пароль задаются через веб-админку
   cfg.pass[0] = '\0';
+  strncpy(cfg.child1, "Ребёнок 1", sizeof(cfg.child1) - 1);
+  cfg.child1[sizeof(cfg.child1) - 1] = '\0';
+  strncpy(cfg.child2, "Ребёнок 2", sizeof(cfg.child2) - 1);
+  cfg.child2[sizeof(cfg.child2) - 1] = '\0';
+  cfg.tgToken[0] = '\0';
 }
 
 // Дефолт, если значение вне допустимого диапазона (пустое/повреждённое).
@@ -28,6 +33,13 @@ void sanitize() {
   cfg.tz[sizeof(cfg.tz) - 1] = '\0';
   cfg.ssid[sizeof(cfg.ssid) - 1] = '\0';
   cfg.pass[sizeof(cfg.pass) - 1] = '\0';
+  cfg.child1[sizeof(cfg.child1) - 1] = '\0';
+  cfg.child2[sizeof(cfg.child2) - 1] = '\0';
+  cfg.tgToken[sizeof(cfg.tgToken) - 1] = '\0';
+  if (cfg.child1[0] == '\0')
+    strncpy(cfg.child1, "Ребёнок 1", sizeof(cfg.child1) - 1);
+  if (cfg.child2[0] == '\0')
+    strncpy(cfg.child2, "Ребёнок 2", sizeof(cfg.child2) - 1);
   if (cfg.tz[0] == '\0')
     strncpy(cfg.tz, "EET-2EEST,M3.5.0/3,M10.5.0/4", sizeof(cfg.tz) - 1);
 }
@@ -48,6 +60,12 @@ void settingsLoad() {
     strncpy(cfg.tz, "EET-2EEST,M3.5.0/3,M10.5.0/4", sizeof(cfg.tz) - 1);
   if (prefs.isKey("ssid")) prefs.getString("ssid", cfg.ssid, sizeof(cfg.ssid));
   if (prefs.isKey("pass")) prefs.getString("pass", cfg.pass, sizeof(cfg.pass));
+  if (prefs.isKey("child1"))
+    prefs.getString("child1", cfg.child1, sizeof(cfg.child1));
+  if (prefs.isKey("child2"))
+    prefs.getString("child2", cfg.child2, sizeof(cfg.child2));
+  if (prefs.isKey("tgTok"))
+    prefs.getString("tgTok", cfg.tgToken, sizeof(cfg.tgToken));
   prefs.end();
   sanitize();
 }
@@ -64,6 +82,9 @@ void settingsSave() {
   prefs.putString("tz", cfg.tz);
   prefs.putString("ssid", cfg.ssid);
   prefs.putString("pass", cfg.pass);
+  prefs.putString("child1", cfg.child1);
+  prefs.putString("child2", cfg.child2);
+  prefs.putString("tgTok", cfg.tgToken);
   prefs.end();
 }
 
@@ -75,4 +96,6 @@ void settingsPrint() {
       cfg.bedtimeMin % 60, cfg.sleepStartMin / 60, cfg.sleepStartMin % 60,
       cfg.sleepEndMin / 60, cfg.sleepEndMin % 60, cfg.tz,
       cfg.ssid[0] ? cfg.ssid : "(пусто)");
+  Serial.printf("[settings] дети: %s / %s, tg: %s\n", cfg.child1, cfg.child2,
+                cfg.tgToken[0] ? "задан" : "пусто");
 }

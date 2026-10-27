@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+#include "admin.h"
 #include "button.h"
 #include "climate.h"
 #include "display.h"
@@ -93,6 +94,7 @@ void setup() {
   climateBegin();
   dispBegin();
   netBegin();
+  adminBegin();
   modesBegin();
 
   Serial.println(F("готово. команды: call 1|2|both [текст], status, scan"));
@@ -104,5 +106,6 @@ void loop() {
   sigTick();
   modesTick();
   if (modesCurrent() == Mode::Idle) dispTick();
+  adminTick();
   serialTick();
 }

@@ -91,11 +91,26 @@ void dispShowAlert(const char* targetLabel, const char* message) {
   u8g2.sendBuffer();
 }
 
+void dispShowSetup() {
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_9x15_t_cyrillic);
+  center("Настройка Wi-Fi", 18);
+  u8g2.setFont(u8g2_font_10x20_t_cyrillic);
+  center("Pendel-Setup", 42);
+  u8g2.setFont(u8g2_font_9x15_t_cyrillic);
+  center("192.168.4.1", 62);
+  u8g2.sendBuffer();
+}
+
 void dispTick() {
   if (asleep) return;
   uint32_t now = millis();
   if (!dirty && now - lastDraw < REFRESH_MS) return;
   lastDraw = now;
   dirty = false;
-  dispShowIdle();
+  if (netProvisioning()) {
+    dispShowSetup();
+  } else {
+    dispShowIdle();
+  }
 }

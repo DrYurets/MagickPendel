@@ -17,7 +17,19 @@ Mode mode = Mode::Idle;
 uint32_t callStart = 0;
 CallTarget callTarget = CallTarget::Both;
 char callMsg[64] = "";
-const char* targetLabels[] = {"РЕБЁНОК 1", "РЕБЁНОК 2", "ОБА"};
+char bothLabel[64];
+
+const char* targetLabel() {
+  switch (callTarget) {
+    case CallTarget::Child1: return cfg.child1;
+    case CallTarget::Child2: return cfg.child2;
+    case CallTarget::Both:
+      snprintf(bothLabel, sizeof(bothLabel), "%s и %s", cfg.child1,
+               cfg.child2);
+      return bothLabel;
+  }
+  return "";
+}
 
 bool warned1 = false, warned2 = false;
 int lastWarnDay = -1;
@@ -40,7 +52,7 @@ void enterMode(Mode m) {
       callStart = millis();
       sigStartCall();
       dispPowerSave(false);
-      dispShowAlert(targetLabels[(int)callTarget], callMsg);
+      dispShowAlert(targetLabel(), callMsg);
       break;
     case Mode::Sleep:
       sigStop();
@@ -77,7 +89,7 @@ void triggerCall(CallTarget target, const char* message) {
   enterMode(Mode::Alert);
 }
 
-const char* modesAlertTargetLabel() { return targetLabels[(int)callTarget]; }
+const char* modesAlertTargetLabel() { return targetLabel(); }
 const char* modesAlertMessage() { return callMsg; }
 
 void modesTick() {
