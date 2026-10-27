@@ -67,6 +67,24 @@ void serialTick() {
     }
   }
 }
+// Встроенный LED (GPIO8, active low): в режиме настройки — быстрое
+// моргание, в обычной работе — редкий heartbeat, в сне — выключен.
+void heartbeatTick() {
+  static uint32_t last = 0;
+  static bool on = false;
+  if (modesCurrent() == Mode::Sleep) {
+    if (on) {
+      on = false;
+      digitalWrite(PIN_LED_ONBOARD, HIGH);
+    }
+    return;
+  }
+  uint32_t period = netProvisioning() ? 200 : 2000;
+  if (millis() - last < period) return;
+  last = millis();
+  on = !on;
+  digitalWrite(PIN_LED_ONBOARD, on ? LOW : HIGH);
+}
 }  // namespace
 
 void setup() {
@@ -102,4 +120,5 @@ void loop() {
   if (modesCurrent() == Mode::Idle) dispTick();
   adminTick();
   serialTick();
+  heartbeatTick();
 }

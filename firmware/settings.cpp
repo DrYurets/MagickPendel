@@ -2,11 +2,24 @@
 
 #include <Preferences.h>
 
+// Дефолты из файла окружения в корне проекта (не коммитится).
+#if __has_include("../.env")
+#include "../.env"
+#define HAS_ENV 1
+#endif
+
 Config cfg;
 
 namespace {
 Preferences prefs;
 constexpr const char* NS = "pendel";
+
+// "ЧЧ:ММ" → минуты от полуночи; при ошибке — fallback.
+uint16_t hmOr(const char* s, uint16_t fallback) {
+  unsigned h, m;
+  if (sscanf(s, "%u:%u", &h, &m) != 2 || h > 23 || m > 59) return fallback;
+  return h * 60 + m;
+}
 
 void defaults() {
   cfg.callDurationSec = 60;
@@ -22,6 +35,19 @@ void defaults() {
   strncpy(cfg.child2, "Ребёнок 2", sizeof(cfg.child2) - 1);
   cfg.child2[sizeof(cfg.child2) - 1] = '\0';
   cfg.tgToken[0] = '\0';
+
+#ifdef HAS_ENV
+  strncpy(cfg.ssid, PENDEL_WIFI_SSID, sizeof(cfg.ssid) - 1);
+  strncpy(cfg.pass, PENDEL_WIFI_PASS, sizeof(cfg.pass) - 1);
+  strncpy(cfg.child1, PENDEL_CHILD1, sizeof(cfg.child1) - 1);
+  strncpy(cfg.child2, PENDEL_CHILD2, sizeof(cfg.child2) - 1);
+  strncpy(cfg.tz, PENDEL_TZ, sizeof(cfg.tz) - 1);
+  strncpy(cfg.tgToken, PENDEL_TG_TOKEN, sizeof(cfg.tgToken) - 1);
+  cfg.callDurationSec = PENDEL_CALL_DURATION_SEC;
+  cfg.bedtimeMin = hmOr(PENDEL_BEDTIME, cfg.bedtimeMin);
+  cfg.sleepStartMin = hmOr(PENDEL_SLEEP_START, cfg.sleepStartMin);
+  cfg.sleepEndMin = hmOr(PENDEL_SLEEP_END, cfg.sleepEndMin);
+#endif
 }
 
 // Дефолт, если значение вне допустимого диапазона (пустое/повреждённое).

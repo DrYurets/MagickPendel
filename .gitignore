@@ -10,6 +10,7 @@
 .idea/
 
 # Секреты — не коммитить
+.env
 secrets.h
 *.secret.h
 *.pem
